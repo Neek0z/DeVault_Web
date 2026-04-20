@@ -1,0 +1,109 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.title {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sectionLabel {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  padding: 0 4px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  font-size: 15px;
+  text-align: left;
+  border-bottom: 0.5px solid var(--border);
+  width: 100%;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowButton {
+  transition: background-color 0.15s ease;
+}
+
+.rowButton:hover {
+  background: var(--bg-fill);
+}
+
+.rowValue {
+  color: var(--text-secondary);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowValueMono {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-family: var(--font-mono);
+}
+
+.danger {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dotOk {
+  background: var(--text-primary);
+}
+
+.dotMissing {
+  background: transparent;
+  border: 1px solid var(--text-secondary);
+  box-sizing: border-box;
+}
+
+.footer {
+  padding: 16px 4px 0;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+}

@@ -1,0 +1,40 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.active {
+  background: var(--text-primary);
+}
+
+.paused {
+  background: transparent;
+  border: 1px solid var(--text-secondary);
+  width: 6px;
+  height: 6px;
+  box-sizing: border-box;
+}
+
+.idea {
+  background: transparent;
+  border: 1px dashed var(--text-secondary);
+  box-sizing: border-box;
+}
+
+.abandoned {
+  background: var(--text-secondary);
+  opacity: 0.4;
+}
