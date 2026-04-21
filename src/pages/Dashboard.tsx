@@ -42,68 +42,72 @@ export default function Dashboard() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <div>
-          <p className={styles.counter}>
-            {projects.length} projet{projects.length > 1 ? 's' : ''} ·{' '}
-            {activeCount} actif{activeCount > 1 ? 's' : ''}
-          </p>
-          <h1 className={styles.title}>Projets</h1>
+      <div className={styles.hero}>
+        <div className={styles.header}>
+          <div>
+            <p className={styles.counter}>
+              {projects.length} projet{projects.length > 1 ? 's' : ''} ·{' '}
+              {activeCount} actif{activeCount > 1 ? 's' : ''}
+            </p>
+            <h1 className={styles.title}>Projets</h1>
+          </div>
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={() => navigate('/settings')}
+              aria-label="Réglages"
+            >
+              <SettingsIcon size={18} strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={() => setModalOpen(true)}
+              aria-label="Nouveau projet"
+            >
+              <Plus size={20} strokeWidth={1.5} />
+            </button>
+          </div>
         </div>
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.iconBtn}
-            onClick={() => navigate('/settings')}
-            aria-label="Réglages"
-          >
-            <SettingsIcon size={18} strokeWidth={1.5} />
-          </button>
-          <button
-            type="button"
-            className={styles.iconBtn}
-            onClick={() => setModalOpen(true)}
-            aria-label="Nouveau projet"
-          >
-            <Plus size={20} strokeWidth={1.5} />
-          </button>
-        </div>
-      </div>
 
-      <SearchBar
-        value={query}
-        onChange={setQuery}
-        placeholder="Rechercher projets, notes, stack…"
-        showKbd
-      />
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Rechercher projets, notes, stack…"
+          showKbd
+        />
 
-      <div className={styles.chips}>
-        {FILTERS.map((f) => (
-          <FilterChip
-            key={f.value}
-            active={filter === f.value}
-            onClick={() => setFilter(f.value)}
-          >
-            {f.label}
-          </FilterChip>
-        ))}
-      </div>
-
-      <div className={styles.list}>
-        {loading && <p className={styles.state}>Chargement…</p>}
-        {error && <p className={styles.state}>Erreur : {error}</p>}
-        {!loading && !error && filtered.length === 0 && (
-          <p className={styles.state}>
-            {query || filter !== 'all'
-              ? 'Aucun projet ne correspond.'
-              : 'Aucun projet. Crée-en un avec +.'}
-          </p>
-        )}
-        {!loading &&
-          !error &&
-          filtered.map((project, i) => (
-            <ProjectRow key={project.id} project={project} index={i} />
+        <div className={styles.chips}>
+          {FILTERS.map((f) => (
+            <FilterChip
+              key={f.value}
+              active={filter === f.value}
+              onClick={() => setFilter(f.value)}
+            >
+              {f.label}
+            </FilterChip>
           ))}
+        </div>
+      </div>
+
+      <div className={styles.content}>
+        <div className={styles.list}>
+          {loading && <p className={styles.state}>Chargement…</p>}
+          {error && <p className={styles.state}>Erreur : {error}</p>}
+          {!loading && !error && filtered.length === 0 && (
+            <p className={styles.state}>
+              {query || filter !== 'all'
+                ? 'Aucun projet ne correspond.'
+                : 'Aucun projet. Crée-en un avec +.'}
+            </p>
+          )}
+          {!loading &&
+            !error &&
+            filtered.map((project, i) => (
+              <ProjectRow key={project.id} project={project} index={i} />
+            ))}
+        </div>
       </div>
 
       {modalOpen && (

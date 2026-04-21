@@ -54,47 +54,56 @@ export default function ProjectDetail() {
 
   return (
     <div className={styles.page}>
-      <Link to="/" className={styles.back}>
-        <ChevronLeft size={18} strokeWidth={1.5} /> Projets
-      </Link>
-
-      <div className={styles.headerBlock}>
-        <StatusBadge status={project.status} />
-        <h1 className={styles.title}>{project.name}</h1>
-        {project.description && <p className={styles.description}>{project.description}</p>}
+      <div className={styles.topBar}>
+        <Link to="/" className={styles.back}>
+          <ChevronLeft size={18} strokeWidth={1.5} /> Projets
+        </Link>
       </div>
 
-      <div className={styles.stats}>
-        <div className={styles.stat}>
-          <span className={styles.statLabel}>Entrées</span>
-          <span className={styles.statValue}>{journal.entries.length}</span>
+      <div className={styles.hero}>
+        <div className={styles.headerBlock}>
+          <StatusBadge status={project.status} />
+          <h1 className={styles.title}>{project.name}</h1>
+          {project.description && (
+            <p className={styles.description}>{project.description}</p>
+          )}
         </div>
-        <div className={styles.stat}>
-          <span className={styles.statLabel}>Actif depuis</span>
-          <span className={styles.statValue}>{daysActive}j</span>
-        </div>
-        <div className={styles.stat}>
-          <span className={styles.statLabel}>MRR</span>
-          <span className={styles.statValue}>—</span>
+
+        <div className={styles.stats}>
+          <div className={styles.stat}>
+            <span className={styles.statLabel}>Entrées</span>
+            <span className={styles.statValue}>{journal.entries.length}</span>
+          </div>
+          <div className={styles.stat}>
+            <span className={styles.statLabel}>Actif depuis</span>
+            <span className={styles.statValue}>{daysActive}j</span>
+          </div>
+          <div className={styles.stat}>
+            <span className={styles.statLabel}>MRR</span>
+            <span className={styles.statValue}>—</span>
+          </div>
         </div>
       </div>
 
-      <div className={styles.tabBar}>
-        {TABS.map((t) => (
-          <button
-            key={t.value}
-            type="button"
-            className={`${styles.tab} ${tab === t.value ? styles.tabActive : ''}`}
-            onClick={() => setTab(t.value)}
-          >
-            {t.label}
-            {t.value === 'todos' && pendingTodos > 0 && (
-              <span className={styles.tabBadge}>{pendingTodos}</span>
-            )}
-          </button>
-        ))}
+      <div className={styles.tabBarWrap}>
+        <div className={styles.tabBar}>
+          {TABS.map((t) => (
+            <button
+              key={t.value}
+              type="button"
+              className={`${styles.tab} ${tab === t.value ? styles.tabActive : ''}`}
+              onClick={() => setTab(t.value)}
+            >
+              {t.label}
+              {t.value === 'todos' && pendingTodos > 0 && (
+                <span className={styles.tabBadge}>{pendingTodos}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
+      <div className={styles.content}>
       {tab === 'overview' && (
         <OverviewPanel
           initial={{
@@ -149,6 +158,7 @@ export default function ProjectDetail() {
           onUpdate={journal.updateEntry}
         />
       )}
+      </div>
     </div>
   );
 }

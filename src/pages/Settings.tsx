@@ -20,8 +20,11 @@ export default function Settings() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.title}>Paramètres</h1>
+      <div className={styles.hero}>
+        <h1 className={styles.title}>Paramètres</h1>
+      </div>
 
+      <div className={styles.content}>
       <section className={styles.section}>
         <span className={styles.sectionLabel}>Compte</span>
         <div className={styles.group}>
@@ -87,6 +90,7 @@ export default function Settings() {
         </div>
         <p className={styles.footer}>Fait avec ❤️ par Nicolas</p>
       </section>
+      </div>
     </div>
   );
 }

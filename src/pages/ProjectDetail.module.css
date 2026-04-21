@@ -1,7 +1,42 @@
 .page {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  overflow: hidden;
+}
+
+.topBar {
+  flex: none;
+  padding: 16px 16px 8px;
+  background: var(--bg-primary);
+}
+
+.hero {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 4px 16px 12px;
+  background: var(--bg-primary);
+}
+
+.tabBarWrap {
+  flex: none;
+  padding: 4px 16px 12px;
+  background: var(--bg-primary);
+  border-bottom: 0.5px solid var(--border);
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 16px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .back {

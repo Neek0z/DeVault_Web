@@ -31,26 +31,29 @@ export default function Ideas() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.title}>Idées</h1>
-        <button
-          type="button"
-          className={styles.iconBtn}
-          onClick={() => setModalOpen(true)}
-          aria-label="Nouvelle idée"
-        >
-          <Plus size={20} strokeWidth={1.5} />
-        </button>
+      <div className={styles.hero}>
+        <div className={styles.header}>
+          <h1 className={styles.title}>Idées</h1>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={() => setModalOpen(true)}
+            aria-label="Nouvelle idée"
+          >
+            <Plus size={20} strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
 
-      {loading && <p className={styles.state}>Chargement…</p>}
-      {error && <p className={styles.state}>Erreur : {error}</p>}
-      {!loading && !error && ideas.length === 0 && (
-        <p className={styles.state}>Aucune idée. Jette-en une avec +.</p>
-      )}
+      <div className={styles.content}>
+        {loading && <p className={styles.state}>Chargement…</p>}
+        {error && <p className={styles.state}>Erreur : {error}</p>}
+        {!loading && !error && ideas.length === 0 && (
+          <p className={styles.state}>Aucune idée. Jette-en une avec +.</p>
+        )}
 
-      <div className={styles.list}>
-        {ideas.map((idea) => (
+        <div className={styles.list}>
+          {ideas.map((idea) => (
           <div
             key={idea.id}
             className={styles.card}
@@ -101,6 +104,7 @@ export default function Ideas() {
             </div>
           </div>
         ))}
+        </div>
       </div>
 
       {modalOpen && (
