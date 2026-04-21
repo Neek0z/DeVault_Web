@@ -19,9 +19,9 @@ type Tab = 'overview' | 'stack' | 'credentials' | 'journal' | 'todos' | 'ideas';
 const TABS: { value: Tab; label: string }[] = [
   { value: 'overview', label: 'Aperçu' },
   { value: 'stack', label: 'Stack' },
-  { value: 'todos', label: 'Tâches' },
   { value: 'credentials', label: 'Identifiants' },
   { value: 'journal', label: 'Journal' },
+  { value: 'todos', label: 'Tâches' },
   { value: 'ideas', label: 'Idées' },
 ];
 
