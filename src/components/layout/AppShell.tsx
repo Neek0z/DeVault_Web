@@ -25,7 +25,9 @@ export function AppShell() {
     <div className={styles.shell}>
       <Sidebar />
       <main className={styles.main}>
-        <Outlet />
+        <div key={location.pathname} className={styles.pageTransition}>
+          <Outlet />
+        </div>
       </main>
       <BottomNav />
 

@@ -87,6 +87,31 @@ export function useCredentials(projectId: string | undefined) {
     []
   );
 
+  const updateCredential = useCallback(
+    async (
+      id: string,
+      patch: Partial<Omit<CredentialInput, 'project_id'>>
+    ): Promise<Credential | null> => {
+      const { data, error } = await supabase
+        .from('credentials')
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) {
+        setState((s) => ({ ...s, error: error.message }));
+        return null;
+      }
+      const cred = data as Credential;
+      setState((s) => ({
+        ...s,
+        credentials: s.credentials.map((c) => (c.id === id ? cred : c)),
+      }));
+      return cred;
+    },
+    []
+  );
+
   const deleteCredential = useCallback(async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('credentials').delete().eq('id', id);
     if (error) {
@@ -97,5 +122,5 @@ export function useCredentials(projectId: string | undefined) {
     return true;
   }, []);
 
-  return { ...state, refetch, insertCredential, deleteCredential };
+  return { ...state, refetch, insertCredential, updateCredential, deleteCredential };
 }

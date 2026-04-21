@@ -36,6 +36,7 @@
 .checkbox:checked {
   background: var(--text-primary);
   border-color: var(--text-primary);
+  animation: checkPop 280ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .checkbox:checked::after {
@@ -62,6 +63,16 @@
   color: var(--text-secondary);
   text-decoration: line-through;
   text-decoration-color: var(--text-secondary);
+}
+
+.edit {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--bg-fill);
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  color: var(--text-primary);
+  font-family: inherit;
 }
 
 .remove {

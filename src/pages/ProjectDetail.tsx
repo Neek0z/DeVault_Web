@@ -14,7 +14,7 @@ import { useTodos } from '../hooks/useTodos';
 import type { ProjectStatus } from '../lib/types';
 import styles from './ProjectDetail.module.css';
 
-type Tab = 'overview' | 'stack' | 'credentials' | 'journal' | 'todos';
+type Tab = 'overview' | 'stack' | 'credentials' | 'journal' | 'todos' | 'ideas';
 
 const TABS: { value: Tab; label: string }[] = [
   { value: 'overview', label: 'Aperçu' },
@@ -22,6 +22,7 @@ const TABS: { value: Tab; label: string }[] = [
   { value: 'todos', label: 'Tâches' },
   { value: 'credentials', label: 'Identifiants' },
   { value: 'journal', label: 'Journal' },
+  { value: 'ideas', label: 'Idées' },
 ];
 
 const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
@@ -126,6 +127,7 @@ export default function ProjectDetail() {
           onAdd={todos.insertTodo}
           onToggle={todos.toggleTodo}
           onDelete={todos.deleteTodo}
+          onUpdate={todos.updateTodo}
         />
       )}
       {tab === 'journal' && (
@@ -134,6 +136,17 @@ export default function ProjectDetail() {
           entries={journal.entries}
           loading={journal.loading}
           onDelete={journal.deleteEntry}
+          onUpdate={journal.updateEntry}
+        />
+      )}
+      {tab === 'ideas' && (
+        <IdeasPanel
+          projectId={project.id}
+          entries={journal.entries}
+          loading={journal.loading}
+          onCreate={journal.insertEntry}
+          onDelete={journal.deleteEntry}
+          onUpdate={journal.updateEntry}
         />
       )}
     </div>
@@ -146,12 +159,14 @@ function TodosPanel({
   onAdd,
   onToggle,
   onDelete,
+  onUpdate,
 }: {
   todos: ReturnType<typeof useTodos>['todos'];
   loading: boolean;
   onAdd: (text: string) => Promise<unknown>;
   onToggle: (id: string, completed: boolean) => Promise<boolean>;
   onDelete: (id: string) => Promise<boolean>;
+  onUpdate: (id: string, text: string) => Promise<boolean>;
 }) {
   const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
@@ -192,7 +207,13 @@ function TodosPanel({
       {pending.length > 0 && (
         <div className={styles.list}>
           {pending.map((t) => (
-            <TodoItem key={t.id} todo={t} onToggle={onToggle} onDelete={onDelete} />
+            <TodoItem
+              key={t.id}
+              todo={t}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onUpdate={onUpdate}
+            />
           ))}
         </div>
       )}
@@ -202,7 +223,13 @@ function TodosPanel({
           <span className={styles.label}>Terminées ({done.length})</span>
           <div className={styles.list}>
             {done.map((t) => (
-              <TodoItem key={t.id} todo={t} onToggle={onToggle} onDelete={onDelete} />
+              <TodoItem
+              key={t.id}
+              todo={t}
+              onToggle={onToggle}
+              onDelete={onDelete}
+              onUpdate={onUpdate}
+            />
             ))}
           </div>
         </>
@@ -347,7 +374,7 @@ function StackPanel({
 }
 
 function CredentialsPanel({ projectId }: { projectId: string }) {
-  const { credentials, loading, insertCredential, deleteCredential } =
+  const { credentials, loading, insertCredential, updateCredential, deleteCredential } =
     useCredentials(projectId);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -367,7 +394,12 @@ function CredentialsPanel({ projectId }: { projectId: string }) {
 
       <div className={styles.list}>
         {credentials.map((c) => (
-          <CredentialRow key={c.id} credential={c} onDelete={deleteCredential} />
+          <CredentialRow
+            key={c.id}
+            credential={c}
+            onDelete={deleteCredential}
+            onUpdate={updateCredential}
+          />
         ))}
       </div>
 
@@ -491,13 +523,16 @@ function JournalPanel({
   entries,
   loading,
   onDelete,
+  onUpdate,
 }: {
   projectId: string;
   entries: ReturnType<typeof useJournal>['entries'];
   loading: boolean;
   onDelete: (id: string) => Promise<boolean>;
+  onUpdate: ReturnType<typeof useJournal>['updateEntry'];
 }) {
   const navigate = useNavigate();
+  const filtered = entries.filter((e) => e.type !== 'idea');
 
   return (
     <div className={styles.panel}>
@@ -513,15 +548,141 @@ function JournalPanel({
       </div>
 
       {loading && <p className={styles.state}>Chargement…</p>}
-      {!loading && entries.length === 0 && (
+      {!loading && filtered.length === 0 && (
         <p className={styles.state}>Aucune entrée.</p>
       )}
 
       <div className={styles.list}>
-        {entries.map((e) => (
-          <JournalEntryRow key={e.id} entry={e} onDelete={onDelete} />
+        {filtered.map((e) => (
+          <JournalEntryRow
+            key={e.id}
+            entry={e}
+            onDelete={onDelete}
+            onUpdate={onUpdate}
+          />
         ))}
       </div>
+    </div>
+  );
+}
+
+function IdeasPanel({
+  projectId,
+  entries,
+  loading,
+  onCreate,
+  onDelete,
+  onUpdate,
+}: {
+  projectId: string;
+  entries: ReturnType<typeof useJournal>['entries'];
+  loading: boolean;
+  onCreate: ReturnType<typeof useJournal>['insertEntry'];
+  onDelete: (id: string) => Promise<boolean>;
+  onUpdate: ReturnType<typeof useJournal>['updateEntry'];
+}) {
+  const [modalOpen, setModalOpen] = useState(false);
+  const ideas = entries.filter((e) => e.type === 'idea');
+
+  return (
+    <div className={styles.panel}>
+      <div className={styles.tabHead}>
+        <span className={styles.tabHeadLabel}>Idées</span>
+        <button
+          type="button"
+          className={styles.addBtn}
+          onClick={() => setModalOpen(true)}
+        >
+          <Plus size={14} strokeWidth={1.8} /> Ajouter
+        </button>
+      </div>
+
+      {loading && <p className={styles.state}>Chargement…</p>}
+      {!loading && ideas.length === 0 && (
+        <p className={styles.state}>Aucune idée pour ce projet.</p>
+      )}
+
+      <div className={styles.list}>
+        {ideas.map((e) => (
+          <JournalEntryRow
+            key={e.id}
+            entry={e}
+            onDelete={onDelete}
+            onUpdate={onUpdate}
+          />
+        ))}
+      </div>
+
+      {modalOpen && (
+        <QuickIdeaModal
+          onClose={() => setModalOpen(false)}
+          onSubmit={async (body) => {
+            const created = await onCreate({
+              project_id: projectId,
+              type: 'idea',
+              body,
+              title: null,
+              tags: [],
+            });
+            if (created) setModalOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function QuickIdeaModal({
+  onClose,
+  onSubmit,
+}: {
+  onClose: () => void;
+  onSubmit: (body: string) => Promise<void>;
+}) {
+  const [body, setBody] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    const v = body.trim();
+    if (!v) return;
+    setBusy(true);
+    try {
+      await onSubmit(v);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className={styles.overlay} onClick={onClose} role="presentation">
+      <form
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={handleSubmit}
+      >
+        <h2 className={styles.modalTitle}>Nouvelle idée</h2>
+        <textarea
+          className={styles.modalTextarea}
+          placeholder="Ton idée…"
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          autoFocus
+          required
+        />
+        <div className={styles.modalActions}>
+          <button type="button" className={styles.modalSecondary} onClick={onClose}>
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className={styles.modalPrimary}
+            disabled={busy || !body.trim()}
+          >
+            {busy ? '…' : 'Créer'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

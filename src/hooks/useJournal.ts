@@ -87,6 +87,31 @@ export function useJournal(projectId: string | undefined) {
     []
   );
 
+  const updateEntry = useCallback(
+    async (
+      id: string,
+      patch: { title?: string | null; body?: string; tags?: string[] }
+    ): Promise<JournalEntry | null> => {
+      const { data, error } = await supabase
+        .from('journal_entries')
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) {
+        setState((s) => ({ ...s, error: error.message }));
+        return null;
+      }
+      const entry = data as JournalEntry;
+      setState((s) => ({
+        ...s,
+        entries: s.entries.map((e) => (e.id === id ? entry : e)),
+      }));
+      return entry;
+    },
+    []
+  );
+
   const deleteEntry = useCallback(async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('journal_entries').delete().eq('id', id);
     if (error) {
@@ -97,5 +122,5 @@ export function useJournal(projectId: string | undefined) {
     return true;
   }, []);
 
-  return { ...state, refetch, insertEntry, deleteEntry };
+  return { ...state, refetch, insertEntry, updateEntry, deleteEntry };
 }

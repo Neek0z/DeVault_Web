@@ -283,7 +283,7 @@
   flex-direction: column;
   gap: 12px;
   box-shadow: var(--shadow-md);
-  animation: slideUpIn 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: slideUpIn 380ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 .modalTitle {

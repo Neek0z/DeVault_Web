@@ -10,8 +10,10 @@ import styles from './Ideas.module.css';
 const CATEGORIES = ['App mobile', 'Outil interne', 'Feature', 'Side project'];
 
 export default function Ideas() {
-  const { ideas, loading, error, insertIdea, deleteIdea, promoteToProject } = useIdeas();
+  const { ideas, loading, error, insertIdea, updateIdea, deleteIdea, promoteToProject } =
+    useIdeas();
   const [modalOpen, setModalOpen] = useState(false);
+  const [editIdea, setEditIdea] = useState<Idea | null>(null);
   const navigate = useNavigate();
 
   async function handlePromote(idea: Idea) {
@@ -49,11 +51,26 @@ export default function Ideas() {
 
       <div className={styles.list}>
         {ideas.map((idea) => (
-          <div key={idea.id} className={styles.card}>
+          <div
+            key={idea.id}
+            className={styles.card}
+            role="button"
+            tabIndex={0}
+            onClick={() => setEditIdea(idea)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setEditIdea(idea);
+              }
+            }}
+          >
             <button
               type="button"
               className={styles.delete}
-              onClick={() => void handleDelete(idea.id)}
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleDelete(idea.id);
+              }}
               aria-label="Supprimer"
             >
               <Trash2 size={14} strokeWidth={1.5} />
@@ -74,7 +91,10 @@ export default function Ideas() {
                 type="button"
                 className={styles.promote}
                 disabled={Boolean(idea.promoted_to_project_id)}
-                onClick={() => void handlePromote(idea)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void handlePromote(idea);
+                }}
               >
                 Promouvoir →
               </button>
@@ -86,9 +106,20 @@ export default function Ideas() {
       {modalOpen && (
         <IdeaModal
           onClose={() => setModalOpen(false)}
-          onCreate={async (input) => {
+          onSubmit={async (input) => {
             const idea = await insertIdea(input);
             if (idea) setModalOpen(false);
+          }}
+        />
+      )}
+
+      {editIdea && (
+        <IdeaModal
+          initial={editIdea}
+          onClose={() => setEditIdea(null)}
+          onSubmit={async (input) => {
+            const saved = await updateIdea(editIdea.id, input);
+            if (saved) setEditIdea(null);
           }}
         />
       )}
@@ -98,13 +129,14 @@ export default function Ideas() {
 
 interface ModalProps {
   onClose: () => void;
-  onCreate: (input: { title: string | null; body: string; category: string | null }) => Promise<void>;
+  onSubmit: (input: { title: string | null; body: string; category: string | null }) => Promise<void>;
+  initial?: Idea;
 }
 
-function IdeaModal({ onClose, onCreate }: ModalProps) {
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+function IdeaModal({ onClose, onSubmit: onSubmitProp, initial }: ModalProps) {
+  const [title, setTitle] = useState(initial?.title ?? '');
+  const [body, setBody] = useState(initial?.body ?? '');
+  const [category, setCategory] = useState<string | null>(initial?.category ?? null);
   const [busy, setBusy] = useState(false);
 
   async function onSubmit(e: FormEvent) {
@@ -112,7 +144,7 @@ function IdeaModal({ onClose, onCreate }: ModalProps) {
     if (!body.trim()) return;
     setBusy(true);
     try {
-      await onCreate({
+      await onSubmitProp({
         title: title.trim() || null,
         body: body.trim(),
         category,
@@ -129,7 +161,7 @@ function IdeaModal({ onClose, onCreate }: ModalProps) {
         onClick={(e) => e.stopPropagation()}
         onSubmit={onSubmit}
       >
-        <h2 className={styles.modalTitle}>Nouvelle idée</h2>
+        <h2 className={styles.modalTitle}>{initial ? 'Éditer l\'idée' : 'Nouvelle idée'}</h2>
         <textarea
           className={styles.textarea}
           placeholder="Ton idée…"
@@ -164,7 +196,7 @@ function IdeaModal({ onClose, onCreate }: ModalProps) {
             className={styles.primary}
             disabled={busy || !body.trim()}
           >
-            Créer
+            {initial ? 'Enregistrer' : 'Créer'}
           </button>
         </div>
       </form>

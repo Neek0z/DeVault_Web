@@ -81,3 +81,91 @@
   background: var(--bg-fill);
   color: var(--text-primary);
 }
+
+.row[role='button'] {
+  cursor: pointer;
+}
+
+.row[role='button']:hover {
+  background: var(--bg-fill);
+}
+
+.editInput,
+.editTextarea,
+.tagInput {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-fill);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+}
+
+.editTextarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.tagInput {
+  width: auto;
+  min-width: 100px;
+  padding: 4px 10px;
+  font-size: 12px;
+  border-radius: var(--radius-pill);
+}
+
+.tagEditable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-fill);
+  padding: 3px 6px 3px 8px;
+  border-radius: var(--radius-pill);
+}
+
+.tagEditable button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  color: var(--text-secondary);
+}
+
+.tagEditable button:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.editCancel {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.editSave {
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.editSave:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

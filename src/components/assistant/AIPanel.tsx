@@ -1,7 +1,8 @@
-import { ArrowUp, Sparkles, X } from 'lucide-react';
+import { ArrowUp, Mic, Sparkles, X } from 'lucide-react';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useAssistant, type ProjectContext } from '../../hooks/useAssistant';
 import { isOpenRouterConfigured } from '../../lib/openrouter';
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
 import styles from './AIPanel.module.css';
 
 const SUGGESTIONS = ['Résume ma semaine', 'Ouvre les bugs', 'Brouillon release notes'];
@@ -15,6 +16,10 @@ export function AIPanel({ onClose, projectContext }: Props) {
   const { messages, loading, error, sendUserMessage } = useAssistant();
   const [input, setInput] = useState('');
   const listRef = useRef<HTMLDivElement>(null);
+  const speech = useSpeechRecognition({
+    lang: 'fr-FR',
+    onResult: (text) => setInput((prev) => (prev ? `${prev} ${text}` : text)),
+  });
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -113,7 +118,9 @@ export function AIPanel({ onClose, projectContext }: Props) {
           <input
             className={styles.input}
             placeholder={
-              projectContext
+              speech.listening
+                ? 'Écoute…'
+                : projectContext
                 ? 'Poser une question sur ce projet…'
                 : 'Poser une question…'
             }
@@ -121,6 +128,22 @@ export function AIPanel({ onClose, projectContext }: Props) {
             onChange={(e) => setInput(e.target.value)}
             disabled={!configured || loading}
           />
+          <button
+            type="button"
+            className={`${styles.mic} ${speech.listening ? styles.micActive : ''}`}
+            onClick={() => (speech.listening ? speech.stop() : speech.start())}
+            disabled={!configured || loading || !speech.supported}
+            title={
+              speech.supported
+                ? speech.listening
+                  ? 'Arrêter'
+                  : 'Dicter'
+                : 'Reconnaissance vocale non supportée par ce navigateur'
+            }
+            aria-label={speech.listening ? 'Arrêter la dictée' : 'Dicter'}
+          >
+            <Mic size={16} strokeWidth={1.8} />
+          </button>
           <button
             type="submit"
             className={`${styles.send} ${loading ? styles.sendLoading : ''}`}

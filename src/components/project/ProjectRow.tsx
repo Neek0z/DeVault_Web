@@ -18,7 +18,7 @@ export function ProjectRow({ project, index = 0 }: Props) {
       className={styles.row}
       role="link"
       tabIndex={0}
-      style={{ animationDelay: `${Math.min(index, 10) * 40}ms` }}
+      style={{ animationDelay: `${Math.min(index, 10) * 60}ms` }}
       onClick={() => navigate(`/projects/${project.id}`)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

@@ -91,6 +91,27 @@ export function useTodos(projectId: string | undefined) {
     []
   );
 
+  const updateTodo = useCallback(
+    async (id: string, text: string): Promise<boolean> => {
+      const trimmed = text.trim();
+      if (!trimmed) return false;
+      const { error } = await supabase
+        .from('todos')
+        .update({ text: trimmed })
+        .eq('id', id);
+      if (error) {
+        setState((s) => ({ ...s, error: error.message }));
+        return false;
+      }
+      setState((s) => ({
+        ...s,
+        todos: s.todos.map((t) => (t.id === id ? { ...t, text: trimmed } : t)),
+      }));
+      return true;
+    },
+    []
+  );
+
   const deleteTodo = useCallback(async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('todos').delete().eq('id', id);
     if (error) {
@@ -101,5 +122,5 @@ export function useTodos(projectId: string | undefined) {
     return true;
   }, []);
 
-  return { ...state, insertTodo, toggleTodo, deleteTodo };
+  return { ...state, insertTodo, toggleTodo, updateTodo, deleteTodo };
 }

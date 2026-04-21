@@ -74,6 +74,33 @@ export function useIdeas() {
     return idea;
   }, []);
 
+  const updateIdea = useCallback(
+    async (id: string, patch: IdeaInput): Promise<Idea | null> => {
+      const payload: Record<string, unknown> = {};
+      if ('title' in patch) payload.title = patch.title ?? null;
+      if ('body' in patch) payload.body = patch.body;
+      if ('category' in patch) payload.category = patch.category ?? null;
+
+      const { data, error } = await supabase
+        .from('ideas')
+        .update(payload)
+        .eq('id', id)
+        .select()
+        .single();
+      if (error) {
+        setState((s) => ({ ...s, error: error.message }));
+        return null;
+      }
+      const idea = data as Idea;
+      setState((s) => ({
+        ...s,
+        ideas: s.ideas.map((i) => (i.id === id ? idea : i)),
+      }));
+      return idea;
+    },
+    []
+  );
+
   const deleteIdea = useCallback(async (id: string): Promise<boolean> => {
     const { error } = await supabase.from('ideas').delete().eq('id', id);
     if (error) {
@@ -136,5 +163,5 @@ export function useIdeas() {
     []
   );
 
-  return { ...state, refetch, insertIdea, deleteIdea, promoteToProject };
+  return { ...state, refetch, insertIdea, updateIdea, deleteIdea, promoteToProject };
 }
