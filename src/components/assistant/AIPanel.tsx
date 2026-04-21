@@ -1,5 +1,5 @@
 import { ArrowUp, Mic, Sparkles, X } from 'lucide-react';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type PointerEvent } from 'react';
 import { useAssistant, type ProjectContext } from '../../hooks/useAssistant';
 import { isOpenRouterConfigured } from '../../lib/openrouter';
 import { useSpeechRecognition } from '../../hooks/useSpeechRecognition';
@@ -20,6 +20,39 @@ export function AIPanel({ onClose, projectContext }: Props) {
     lang: 'fr-FR',
     onResult: (text) => setInput((prev) => (prev ? `${prev} ${text}` : text)),
   });
+  const pressRef = useRef<{ startedAt: number; startedListening: boolean } | null>(null);
+
+  const HOLD_MS = 300;
+
+  function onMicPointerDown(e: PointerEvent<HTMLButtonElement>) {
+    if (!speech.supported || !configured || loading) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const alreadyListening = speech.listening;
+    if (!alreadyListening) speech.start();
+    pressRef.current = {
+      startedAt: Date.now(),
+      startedListening: !alreadyListening,
+    };
+  }
+
+  function onMicPointerUp(e: PointerEvent<HTMLButtonElement>) {
+    const press = pressRef.current;
+    pressRef.current = null;
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+    if (!press) return;
+    const held = Date.now() - press.startedAt > HOLD_MS;
+    if (held) {
+      speech.stop();
+    } else if (!press.startedListening) {
+      speech.stop();
+    }
+  }
+
+  function onMicPointerCancel() {
+    pressRef.current = null;
+  }
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: 'smooth' });
@@ -131,13 +164,15 @@ export function AIPanel({ onClose, projectContext }: Props) {
           <button
             type="button"
             className={`${styles.mic} ${speech.listening ? styles.micActive : ''}`}
-            onClick={() => (speech.listening ? speech.stop() : speech.start())}
+            onPointerDown={onMicPointerDown}
+            onPointerUp={onMicPointerUp}
+            onPointerCancel={onMicPointerCancel}
             disabled={!configured || loading || !speech.supported}
             title={
               speech.supported
                 ? speech.listening
-                  ? 'Arrêter'
-                  : 'Dicter'
+                  ? 'Relâcher pour arrêter · tap pour basculer'
+                  : 'Maintenir ou tap pour dicter'
                 : 'Reconnaissance vocale non supportée par ce navigateur'
             }
             aria-label={speech.listening ? 'Arrêter la dictée' : 'Dicter'}

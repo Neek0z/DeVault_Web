@@ -62,25 +62,19 @@ export function useSpeechRecognition({ lang = 'fr-FR', onResult }: Options) {
   const [supported] = useState<boolean>(() => getCtor() !== null);
   const [listening, setListening] = useState(false);
   const recRef = useRef<SpeechRecognitionInstance | null>(null);
+  const wantsListeningRef = useRef(false);
   const onResultRef = useRef(onResult);
 
   useEffect(() => {
     onResultRef.current = onResult;
   }, [onResult]);
 
-  const start = useCallback(() => {
+  const spawn = useCallback((): SpeechRecognitionInstance | null => {
     const Ctor = getCtor();
-    if (!Ctor) return;
-    if (recRef.current) {
-      try {
-        recRef.current.abort();
-      } catch {
-        /* noop */
-      }
-    }
+    if (!Ctor) return null;
     const rec = new Ctor();
     rec.lang = lang;
-    rec.continuous = false;
+    rec.continuous = true;
     rec.interimResults = false;
     rec.onresult = (e) => {
       let text = '';
@@ -91,24 +85,56 @@ export function useSpeechRecognition({ lang = 'fr-FR', onResult }: Options) {
       const clean = text.trim();
       if (clean) onResultRef.current(clean);
     };
-    rec.onerror = () => {
-      setListening(false);
+    rec.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+        wantsListeningRef.current = false;
+        setListening(false);
+      }
     };
     rec.onend = () => {
+      if (wantsListeningRef.current) {
+        try {
+          rec.start();
+          return;
+        } catch {
+          /* fall through */
+        }
+      }
       setListening(false);
     };
+    return rec;
+  }, [lang]);
+
+  const start = useCallback(() => {
+    if (wantsListeningRef.current) return;
+    const existing = recRef.current;
+    if (existing) {
+      try {
+        existing.abort();
+      } catch {
+        /* noop */
+      }
+    }
+    const rec = spawn();
+    if (!rec) return;
     recRef.current = rec;
+    wantsListeningRef.current = true;
     try {
       rec.start();
       setListening(true);
     } catch {
+      wantsListeningRef.current = false;
       setListening(false);
     }
-  }, [lang]);
+  }, [spawn]);
 
   const stop = useCallback(() => {
+    wantsListeningRef.current = false;
     const rec = recRef.current;
-    if (!rec) return;
+    if (!rec) {
+      setListening(false);
+      return;
+    }
     try {
       rec.stop();
     } catch {
@@ -118,6 +144,7 @@ export function useSpeechRecognition({ lang = 'fr-FR', onResult }: Options) {
 
   useEffect(() => {
     return () => {
+      wantsListeningRef.current = false;
       const rec = recRef.current;
       if (rec) {
         try {
