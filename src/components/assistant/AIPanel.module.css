@@ -128,6 +128,9 @@
   color: var(--text-secondary);
   align-self: flex-start;
   padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .error {
@@ -198,11 +201,32 @@
   background: var(--text-primary);
   color: var(--bg-primary);
   flex-shrink: 0;
+  transition: transform 150ms ease, opacity 150ms ease;
+}
+
+.send:hover:not(:disabled) {
+  transform: scale(1.06);
+}
+
+.send:active:not(:disabled) {
+  transform: scale(0.94);
 }
 
 .send:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+}
+
+.sendIcon {
+  display: inline-flex;
+}
+
+.sendLoading .sendIcon {
+  animation: sendRotate 800ms linear infinite;
+}
+
+.bubble {
+  animation: fadeSlideIn 220ms ease both;
 }
 
 @media (min-width: 768px) {

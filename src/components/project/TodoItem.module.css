@@ -1,0 +1,87 @@
+.row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 0.5px solid var(--border);
+  animation: fadeSlideIn 280ms ease both;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.checkbox {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--text-secondary);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  transition: background-color 150ms ease, border-color 150ms ease,
+    transform 150ms ease;
+}
+
+.checkbox:hover {
+  border-color: var(--text-primary);
+}
+
+.checkbox:active {
+  transform: scale(0.92);
+}
+
+.checkbox:checked {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+}
+
+.checkbox:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 9px;
+  border-right: 1.5px solid var(--bg-primary);
+  border-bottom: 1.5px solid var(--bg-primary);
+  transform: rotate(45deg);
+}
+
+.text {
+  font-size: 15px;
+  color: var(--text-primary);
+  line-height: 1.35;
+  word-break: break-word;
+  transition: color 180ms ease, text-decoration-color 180ms ease;
+}
+
+.done {
+  color: var(--text-secondary);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-secondary);
+}
+
+.remove {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 150ms ease, background-color 150ms ease, color 150ms ease;
+}
+
+.row:hover .remove,
+.remove:focus-visible {
+  opacity: 1;
+}
+
+.remove:hover {
+  background: var(--bg-fill);
+  color: var(--text-primary);
+}

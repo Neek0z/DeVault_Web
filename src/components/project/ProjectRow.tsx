@@ -7,9 +7,10 @@ import styles from './ProjectRow.module.css';
 
 interface Props {
   project: Project;
+  index?: number;
 }
 
-export function ProjectRow({ project }: Props) {
+export function ProjectRow({ project, index = 0 }: Props) {
   const navigate = useNavigate();
 
   return (
@@ -17,6 +18,7 @@ export function ProjectRow({ project }: Props) {
       className={styles.row}
       role="link"
       tabIndex={0}
+      style={{ animationDelay: `${Math.min(index, 10) * 40}ms` }}
       onClick={() => navigate(`/projects/${project.id}`)}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {

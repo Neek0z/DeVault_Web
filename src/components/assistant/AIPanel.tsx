@@ -101,7 +101,11 @@ export function AIPanel({ onClose, projectContext }: Props) {
             </div>
           ))}
 
-          {loading && <span className={styles.typing}>L'assistant réfléchit…</span>}
+          {loading && (
+            <span className={styles.typing}>
+              <span className="spinner" aria-hidden /> L'assistant réfléchit…
+            </span>
+          )}
           {error && <span className={styles.error}>{error}</span>}
         </div>
 
@@ -119,11 +123,13 @@ export function AIPanel({ onClose, projectContext }: Props) {
           />
           <button
             type="submit"
-            className={styles.send}
+            className={`${styles.send} ${loading ? styles.sendLoading : ''}`}
             disabled={!configured || loading || !input.trim()}
             aria-label="Envoyer"
           >
-            <ArrowUp size={18} strokeWidth={1.8} />
+            <span className={styles.sendIcon}>
+              <ArrowUp size={18} strokeWidth={1.8} />
+            </span>
           </button>
         </form>
       </aside>

@@ -5,18 +5,21 @@ import { CredentialRow } from '../components/project/CredentialRow';
 import { JournalEntryRow } from '../components/project/JournalEntryRow';
 import { StackTag } from '../components/project/StackTag';
 import { StatusBadge } from '../components/project/StatusBadge';
+import { TodoItem } from '../components/project/TodoItem';
 import { FilterChip } from '../components/ui/FilterChip';
 import { useCredentials } from '../hooks/useCredentials';
 import { useJournal } from '../hooks/useJournal';
 import { useProject } from '../hooks/useProject';
+import { useTodos } from '../hooks/useTodos';
 import type { ProjectStatus } from '../lib/types';
 import styles from './ProjectDetail.module.css';
 
-type Tab = 'overview' | 'stack' | 'credentials' | 'journal';
+type Tab = 'overview' | 'stack' | 'credentials' | 'journal' | 'todos';
 
 const TABS: { value: Tab; label: string }[] = [
   { value: 'overview', label: 'Aperçu' },
   { value: 'stack', label: 'Stack' },
+  { value: 'todos', label: 'Tâches' },
   { value: 'credentials', label: 'Identifiants' },
   { value: 'journal', label: 'Journal' },
 ];
@@ -32,8 +35,10 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const { project, loading, error, save } = useProject(id);
   const journal = useJournal(id);
+  const todos = useTodos(id);
   const [tab, setTab] = useState<Tab>('overview');
   const [mountTime] = useState(() => Date.now());
+  const pendingTodos = todos.todos.filter((t) => !t.completed).length;
 
   if (loading) return <p className={styles.state}>Chargement…</p>;
   if (error) return <p className={styles.state}>Erreur : {error}</p>;
@@ -82,6 +87,9 @@ export default function ProjectDetail() {
             onClick={() => setTab(t.value)}
           >
             {t.label}
+            {t.value === 'todos' && pendingTodos > 0 && (
+              <span className={styles.tabBadge}>{pendingTodos}</span>
+            )}
           </button>
         ))}
       </div>
@@ -111,6 +119,15 @@ export default function ProjectDetail() {
         />
       )}
       {tab === 'credentials' && <CredentialsPanel projectId={project.id} />}
+      {tab === 'todos' && (
+        <TodosPanel
+          todos={todos.todos}
+          loading={todos.loading}
+          onAdd={todos.insertTodo}
+          onToggle={todos.toggleTodo}
+          onDelete={todos.deleteTodo}
+        />
+      )}
       {tab === 'journal' && (
         <JournalPanel
           projectId={project.id}
@@ -118,6 +135,77 @@ export default function ProjectDetail() {
           loading={journal.loading}
           onDelete={journal.deleteEntry}
         />
+      )}
+    </div>
+  );
+}
+
+function TodosPanel({
+  todos,
+  loading,
+  onAdd,
+  onToggle,
+  onDelete,
+}: {
+  todos: ReturnType<typeof useTodos>['todos'];
+  loading: boolean;
+  onAdd: (text: string) => Promise<unknown>;
+  onToggle: (id: string, completed: boolean) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
+}) {
+  const [value, setValue] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault();
+    const v = value.trim();
+    if (!v || busy) return;
+    setBusy(true);
+    try {
+      const created = await onAdd(v);
+      if (created) setValue('');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const pending = todos.filter((t) => !t.completed);
+  const done = todos.filter((t) => t.completed);
+
+  return (
+    <div className={styles.panel}>
+      <form onSubmit={onSubmit}>
+        <input
+          className={styles.todoInput}
+          placeholder="Ajouter une tâche…"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          disabled={busy}
+        />
+      </form>
+
+      {loading && <p className={styles.state}>Chargement…</p>}
+      {!loading && todos.length === 0 && (
+        <p className={styles.state}>Aucune tâche.</p>
+      )}
+
+      {pending.length > 0 && (
+        <div className={styles.list}>
+          {pending.map((t) => (
+            <TodoItem key={t.id} todo={t} onToggle={onToggle} onDelete={onDelete} />
+          ))}
+        </div>
+      )}
+
+      {done.length > 0 && (
+        <>
+          <span className={styles.label}>Terminées ({done.length})</span>
+          <div className={styles.list}>
+            {done.map((t) => (
+              <TodoItem key={t.id} todo={t} onToggle={onToggle} onDelete={onDelete} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

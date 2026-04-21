@@ -101,7 +101,9 @@ export default function Dashboard() {
         )}
         {!loading &&
           !error &&
-          filtered.map((project) => <ProjectRow key={project.id} project={project} />)}
+          filtered.map((project, i) => (
+            <ProjectRow key={project.id} project={project} index={i} />
+          ))}
       </div>
 
       {modalOpen && (

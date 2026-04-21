@@ -6,7 +6,9 @@ import styles from './Settings.module.css';
 const AI_MODEL = 'anthropic/claude-haiku-4-5';
 
 export default function Settings() {
-  const { theme, toggle } = useTheme();
+  const { theme, cycle } = useTheme();
+  const themeLabel =
+    theme === 'system' ? 'Système' : theme === 'light' ? 'Clair' : 'Sombre';
   const { user, signOut } = useAuth();
   const configured = isOpenRouterConfigured();
 
@@ -45,12 +47,10 @@ export default function Settings() {
           <button
             type="button"
             className={`${styles.row} ${styles.rowButton}`}
-            onClick={toggle}
+            onClick={cycle}
           >
             <span>Thème</span>
-            <span className={styles.rowValue}>
-              {theme === 'light' ? 'Clair' : 'Sombre'}
-            </span>
+            <span className={styles.rowValue}>{themeLabel}</span>
           </button>
         </div>
       </section>

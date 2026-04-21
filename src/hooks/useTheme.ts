@@ -1,30 +1,41 @@
 import { useCallback, useEffect, useState } from 'react';
 
-type Theme = 'light' | 'dark';
+export type Theme = 'system' | 'light' | 'dark';
 const STORAGE_KEY = 'devault-theme';
 
 function readStored(): Theme {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') return 'system';
   const stored = window.localStorage.getItem(STORAGE_KEY);
-  if (stored === 'light' || stored === 'dark') return stored;
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  if (stored === 'light' || stored === 'dark' || stored === 'system') return stored;
+  return 'system';
 }
 
 function apply(theme: Theme) {
-  document.documentElement.setAttribute('data-theme', theme);
+  const root = document.documentElement;
+  if (theme === 'system') {
+    root.removeAttribute('data-theme');
+  } else {
+    root.setAttribute('data-theme', theme);
+  }
 }
 
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>(readStored);
+  const [theme, setThemeState] = useState<Theme>(readStored);
 
   useEffect(() => {
     apply(theme);
     window.localStorage.setItem(STORAGE_KEY, theme);
   }, [theme]);
 
-  const toggle = useCallback(() => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
+  const setTheme = useCallback((next: Theme) => {
+    setThemeState(next);
   }, []);
 
-  return { theme, setTheme, toggle };
+  const cycle = useCallback(() => {
+    setThemeState((prev) =>
+      prev === 'system' ? 'light' : prev === 'light' ? 'dark' : 'system'
+    );
+  }, []);
+
+  return { theme, setTheme, cycle };
 }

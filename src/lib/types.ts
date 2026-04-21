@@ -33,6 +33,14 @@ export interface JournalEntry {
   created_at: string;
 }
 
+export interface Todo {
+  id: string;
+  project_id: string;
+  text: string;
+  completed: boolean;
+  created_at: string;
+}
+
 export interface Idea {
   id: string;
   user_id: string;

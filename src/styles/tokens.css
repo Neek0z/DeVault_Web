@@ -28,6 +28,21 @@
   --space-10: 40px;
 }
 
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-primary: #1C1C1E;
+    --bg-secondary: #2C2C2E;
+    --bg-card: #2C2C2E;
+    --bg-fill: #3A3A3C;
+    --text-primary: #FFFFFF;
+    --text-secondary: #8E8E93;
+    --border: #3A3A3C;
+
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  }
+}
+
 [data-theme='dark'] {
   --bg-primary: #1C1C1E;
   --bg-secondary: #2C2C2E;
