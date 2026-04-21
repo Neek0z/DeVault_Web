@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Project, ProjectStatus } from '../lib/types';
 
@@ -77,6 +78,13 @@ export function useProjects() {
 
       const project = data as Project;
       setState((s) => ({ ...s, projects: [project, ...s.projects] }));
+      logActivity({
+        resource_type: 'project',
+        resource_id: project.id,
+        project_id: project.id,
+        action: 'create',
+        label: `Projet créé — ${truncate(project.name)}`,
+      });
       return project;
     },
     []
@@ -105,6 +113,18 @@ export function useProjects() {
           .map((p) => (p.id === id ? project : p))
           .sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
       }));
+      const fields = Object.keys(input);
+      const label =
+        fields.length === 1 && fields[0] === 'status'
+          ? `Statut → ${project.status} — ${truncate(project.name)}`
+          : `Projet modifié — ${truncate(project.name)}`;
+      logActivity({
+        resource_type: 'project',
+        resource_id: project.id,
+        project_id: project.id,
+        action: 'update',
+        label,
+      });
       return project;
     },
     []

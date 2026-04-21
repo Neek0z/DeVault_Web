@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { JournalEntry, JournalType } from '../lib/types';
+
+function labelFor(entry: JournalEntry): string {
+  return entry.title?.trim() || truncate(entry.body);
+}
 
 export interface JournalInput {
   project_id: string;
@@ -82,6 +87,13 @@ export function useJournal(projectId: string | undefined) {
       }
       const entry = data as JournalEntry;
       setState((s) => ({ ...s, entries: [entry, ...s.entries] }));
+      logActivity({
+        resource_type: 'journal',
+        resource_id: entry.id,
+        project_id: entry.project_id,
+        action: 'create',
+        label: `Journal (${entry.type}) — ${labelFor(entry)}`,
+      });
       return entry;
     },
     []
@@ -107,20 +119,37 @@ export function useJournal(projectId: string | undefined) {
         ...s,
         entries: s.entries.map((e) => (e.id === id ? entry : e)),
       }));
+      logActivity({
+        resource_type: 'journal',
+        resource_id: entry.id,
+        project_id: entry.project_id,
+        action: 'update',
+        label: `Journal modifié — ${labelFor(entry)}`,
+      });
       return entry;
     },
     []
   );
 
   const deleteEntry = useCallback(async (id: string): Promise<boolean> => {
+    const target = state.entries.find((e) => e.id === id);
     const { error } = await supabase.from('journal_entries').delete().eq('id', id);
     if (error) {
       setState((s) => ({ ...s, error: error.message }));
       return false;
     }
     setState((s) => ({ ...s, entries: s.entries.filter((e) => e.id !== id) }));
+    if (target) {
+      logActivity({
+        resource_type: 'journal',
+        resource_id: null,
+        project_id: target.project_id,
+        action: 'delete',
+        label: `Journal supprimé — ${labelFor(target)}`,
+      });
+    }
     return true;
-  }, []);
+  }, [state.entries]);
 
   return { ...state, refetch, insertEntry, updateEntry, deleteEntry };
 }

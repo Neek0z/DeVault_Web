@@ -1,4 +1,4 @@
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
@@ -82,6 +82,18 @@ export default function Settings() {
             <span>Modèle</span>
             <span className={styles.rowValueMono}>{AI_MODEL}</span>
           </div>
+        </div>
+      </section>
+
+      <section className={styles.section}>
+        <span className={styles.sectionLabel}>Activité</span>
+        <div className={styles.group}>
+          <Link to="/history" className={`${styles.row} ${styles.rowButton}`}>
+            <span>Historique</span>
+            <span className={styles.rowValue}>
+              <ChevronRight size={16} strokeWidth={1.5} />
+            </span>
+          </Link>
         </div>
       </section>
 

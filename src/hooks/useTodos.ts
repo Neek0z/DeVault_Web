@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Todo } from '../lib/types';
 
@@ -63,6 +64,13 @@ export function useTodos(projectId: string | undefined) {
       }
       const todo = data as Todo;
       setState((s) => ({ ...s, todos: [todo, ...s.todos] }));
+      logActivity({
+        resource_type: 'todo',
+        resource_id: todo.id,
+        project_id: todo.project_id,
+        action: 'create',
+        label: `Tâche ajoutée — ${truncate(todo.text)}`,
+      });
       return todo;
     },
     [projectId]
@@ -70,10 +78,14 @@ export function useTodos(projectId: string | undefined) {
 
   const toggleTodo = useCallback(
     async (id: string, completed: boolean): Promise<boolean> => {
-      setState((s) => ({
-        ...s,
-        todos: s.todos.map((t) => (t.id === id ? { ...t, completed } : t)),
-      }));
+      let target: Todo | undefined;
+      setState((s) => {
+        target = s.todos.find((t) => t.id === id);
+        return {
+          ...s,
+          todos: s.todos.map((t) => (t.id === id ? { ...t, completed } : t)),
+        };
+      });
       const { error } = await supabase
         .from('todos')
         .update({ completed })
@@ -85,6 +97,15 @@ export function useTodos(projectId: string | undefined) {
           todos: s.todos.map((t) => (t.id === id ? { ...t, completed: !completed } : t)),
         }));
         return false;
+      }
+      if (target) {
+        logActivity({
+          resource_type: 'todo',
+          resource_id: id,
+          project_id: target.project_id,
+          action: 'toggle',
+          label: `Tâche ${completed ? 'cochée' : 'décochée'} — ${truncate(target.text)}`,
+        });
       }
       return true;
     },
@@ -103,24 +124,48 @@ export function useTodos(projectId: string | undefined) {
         setState((s) => ({ ...s, error: error.message }));
         return false;
       }
-      setState((s) => ({
-        ...s,
-        todos: s.todos.map((t) => (t.id === id ? { ...t, text: trimmed } : t)),
-      }));
+      let projectIdForLog: string | null = null;
+      setState((s) => {
+        projectIdForLog = s.todos.find((t) => t.id === id)?.project_id ?? null;
+        return {
+          ...s,
+          todos: s.todos.map((t) => (t.id === id ? { ...t, text: trimmed } : t)),
+        };
+      });
+      logActivity({
+        resource_type: 'todo',
+        resource_id: id,
+        project_id: projectIdForLog,
+        action: 'update',
+        label: `Tâche modifiée — ${truncate(trimmed)}`,
+      });
       return true;
     },
     []
   );
 
-  const deleteTodo = useCallback(async (id: string): Promise<boolean> => {
-    const { error } = await supabase.from('todos').delete().eq('id', id);
-    if (error) {
-      setState((s) => ({ ...s, error: error.message }));
-      return false;
-    }
-    setState((s) => ({ ...s, todos: s.todos.filter((t) => t.id !== id) }));
-    return true;
-  }, []);
+  const deleteTodo = useCallback(
+    async (id: string): Promise<boolean> => {
+      const target = state.todos.find((t) => t.id === id);
+      const { error } = await supabase.from('todos').delete().eq('id', id);
+      if (error) {
+        setState((s) => ({ ...s, error: error.message }));
+        return false;
+      }
+      setState((s) => ({ ...s, todos: s.todos.filter((t) => t.id !== id) }));
+      if (target) {
+        logActivity({
+          resource_type: 'todo',
+          resource_id: null,
+          project_id: target.project_id,
+          action: 'delete',
+          label: `Tâche supprimée — ${truncate(target.text)}`,
+        });
+      }
+      return true;
+    },
+    [state.todos]
+  );
 
   return { ...state, insertTodo, toggleTodo, updateTodo, deleteTodo };
 }

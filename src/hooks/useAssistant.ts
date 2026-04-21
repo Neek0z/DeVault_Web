@@ -5,6 +5,7 @@ import {
   type ToolCall,
   type ToolDefinition,
 } from '../lib/openrouter';
+import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type {
   Credential,
@@ -232,17 +233,29 @@ async function executeTool(
     const body = asString(args.body);
     if (!project_id || !type || !body) return '⚠ Arguments manquants pour ajouter une entrée.';
     const project = projects.find((p) => p.id === project_id);
-    const { error } = await supabase.from('journal_entries').insert({
-      project_id,
-      type,
-      title: asString(args.title),
-      body,
-      tags: asStringArray(args.tags) ?? [],
-    });
+    const entryTitle = asString(args.title);
+    const { data, error } = await supabase
+      .from('journal_entries')
+      .insert({
+        project_id,
+        type,
+        title: entryTitle,
+        body,
+        tags: asStringArray(args.tags) ?? [],
+      })
+      .select('id')
+      .single();
     if (error) return `⚠ Erreur : ${error.message}`;
     const label = project ? project.name : 'ce projet';
     const typeLabel =
       type === 'idea' ? 'Idée' : type === 'bug' ? 'Bug' : type === 'decision' ? 'Décision' : 'Note';
+    logActivity({
+      resource_type: 'journal',
+      resource_id: (data as { id: string } | null)?.id ?? null,
+      project_id,
+      action: 'create',
+      label: `Journal (${type}) via IA — ${truncate(entryTitle ?? body)}`,
+    });
     return `✓ ${typeLabel} ajoutée dans ${label}.`;
   }
 
@@ -251,9 +264,20 @@ async function executeTool(
     const text = asString(args.text);
     if (!project_id || !text) return '⚠ Arguments manquants pour ajouter une tâche.';
     const project = projects.find((p) => p.id === project_id);
-    const { error } = await supabase.from('todos').insert({ project_id, text });
+    const { data, error } = await supabase
+      .from('todos')
+      .insert({ project_id, text })
+      .select('id')
+      .single();
     if (error) return `⚠ Erreur : ${error.message}`;
     const label = project ? project.name : 'ce projet';
+    logActivity({
+      resource_type: 'todo',
+      resource_id: (data as { id: string } | null)?.id ?? null,
+      project_id,
+      action: 'create',
+      label: `Tâche ajoutée via IA — ${truncate(text)}`,
+    });
     return `✓ Tâche ajoutée dans ${label}.`;
   }
 
@@ -263,13 +287,24 @@ async function executeTool(
     const { data: userRes } = await supabase.auth.getUser();
     const user_id = userRes.user?.id;
     if (!user_id) return "⚠ Utilisateur non connecté.";
-    const { error } = await supabase.from('ideas').insert({
-      user_id,
-      title: asString(args.title),
-      body,
-      category: asString(args.category),
-    });
+    const ideaTitle = asString(args.title);
+    const { data, error } = await supabase
+      .from('ideas')
+      .insert({
+        user_id,
+        title: ideaTitle,
+        body,
+        category: asString(args.category),
+      })
+      .select('id')
+      .single();
     if (error) return `⚠ Erreur : ${error.message}`;
+    logActivity({
+      resource_type: 'idea',
+      resource_id: (data as { id: string } | null)?.id ?? null,
+      action: 'create',
+      label: `Idée ajoutée via IA — ${truncate(ideaTitle ?? body)}`,
+    });
     return '✓ Idée ajoutée dans la liste.';
   }
 
@@ -284,6 +319,13 @@ async function executeTool(
       .eq('id', project_id);
     if (error) return `⚠ Erreur : ${error.message}`;
     const label = project ? project.name : 'projet';
+    logActivity({
+      resource_type: 'project',
+      resource_id: project_id,
+      project_id,
+      action: 'update',
+      label: `Statut → ${status} via IA — ${truncate(label)}`,
+    });
     return `✓ Statut de ${label} → ${status}.`;
   }
 
@@ -301,8 +343,21 @@ async function executeTool(
       if (tags) patch.tags = tags;
     }
     if (Object.keys(patch).length === 0) return '⚠ Rien à mettre à jour.';
-    const { error } = await supabase.from('journal_entries').update(patch).eq('id', id);
+    const { data, error } = await supabase
+      .from('journal_entries')
+      .update(patch)
+      .eq('id', id)
+      .select('project_id, title, body')
+      .single();
     if (error) return `⚠ Erreur : ${error.message}`;
+    const updated = data as { project_id: string; title: string | null; body: string } | null;
+    logActivity({
+      resource_type: 'journal',
+      resource_id: id,
+      project_id: updated?.project_id ?? null,
+      action: 'update',
+      label: `Journal modifié via IA — ${truncate(updated?.title ?? updated?.body ?? '')}`,
+    });
     return '✓ Entrée mise à jour.';
   }
 

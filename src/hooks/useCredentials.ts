@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Credential } from '../lib/types';
 
@@ -82,6 +83,13 @@ export function useCredentials(projectId: string | undefined) {
       }
       const cred = data as Credential;
       setState((s) => ({ ...s, credentials: [cred, ...s.credentials] }));
+      logActivity({
+        resource_type: 'credential',
+        resource_id: cred.id,
+        project_id: cred.project_id,
+        action: 'create',
+        label: `Identifiant ajouté — ${truncate(cred.service)}`,
+      });
       return cred;
     },
     []
@@ -107,20 +115,40 @@ export function useCredentials(projectId: string | undefined) {
         ...s,
         credentials: s.credentials.map((c) => (c.id === id ? cred : c)),
       }));
+      logActivity({
+        resource_type: 'credential',
+        resource_id: cred.id,
+        project_id: cred.project_id,
+        action: 'update',
+        label: `Identifiant modifié — ${truncate(cred.service)}`,
+      });
       return cred;
     },
     []
   );
 
-  const deleteCredential = useCallback(async (id: string): Promise<boolean> => {
-    const { error } = await supabase.from('credentials').delete().eq('id', id);
-    if (error) {
-      setState((s) => ({ ...s, error: error.message }));
-      return false;
-    }
-    setState((s) => ({ ...s, credentials: s.credentials.filter((c) => c.id !== id) }));
-    return true;
-  }, []);
+  const deleteCredential = useCallback(
+    async (id: string): Promise<boolean> => {
+      const target = state.credentials.find((c) => c.id === id);
+      const { error } = await supabase.from('credentials').delete().eq('id', id);
+      if (error) {
+        setState((s) => ({ ...s, error: error.message }));
+        return false;
+      }
+      setState((s) => ({ ...s, credentials: s.credentials.filter((c) => c.id !== id) }));
+      if (target) {
+        logActivity({
+          resource_type: 'credential',
+          resource_id: null,
+          project_id: target.project_id,
+          action: 'delete',
+          label: `Identifiant supprimé — ${truncate(target.service)}`,
+        });
+      }
+      return true;
+    },
+    [state.credentials]
+  );
 
   return { ...state, refetch, insertCredential, updateCredential, deleteCredential };
 }

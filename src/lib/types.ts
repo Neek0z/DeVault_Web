@@ -50,3 +50,17 @@ export interface Idea {
   promoted_to_project_id: string | null;
   created_at: string;
 }
+
+export type ActivityResource = 'project' | 'journal' | 'credential' | 'idea' | 'todo';
+export type ActivityAction = 'create' | 'update' | 'delete' | 'promote' | 'toggle';
+
+export interface ActivityLog {
+  id: string;
+  user_id: string;
+  resource_type: ActivityResource;
+  resource_id: string | null;
+  project_id: string | null;
+  action: ActivityAction;
+  label: string;
+  created_at: string;
+}

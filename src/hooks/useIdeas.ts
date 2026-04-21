@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
+import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Idea, Project } from '../lib/types';
+
+function ideaLabel(idea: Idea): string {
+  return idea.title?.trim() || truncate(idea.body);
+}
 
 export interface IdeaInput {
   title?: string | null;
@@ -71,6 +76,12 @@ export function useIdeas() {
     }
     const idea = data as Idea;
     setState((s) => ({ ...s, ideas: [idea, ...s.ideas] }));
+    logActivity({
+      resource_type: 'idea',
+      resource_id: idea.id,
+      action: 'create',
+      label: `Idée ajoutée — ${ideaLabel(idea)}`,
+    });
     return idea;
   }, []);
 
@@ -96,20 +107,38 @@ export function useIdeas() {
         ...s,
         ideas: s.ideas.map((i) => (i.id === id ? idea : i)),
       }));
+      logActivity({
+        resource_type: 'idea',
+        resource_id: idea.id,
+        action: 'update',
+        label: `Idée modifiée — ${ideaLabel(idea)}`,
+      });
       return idea;
     },
     []
   );
 
-  const deleteIdea = useCallback(async (id: string): Promise<boolean> => {
-    const { error } = await supabase.from('ideas').delete().eq('id', id);
-    if (error) {
-      setState((s) => ({ ...s, error: error.message }));
-      return false;
-    }
-    setState((s) => ({ ...s, ideas: s.ideas.filter((i) => i.id !== id) }));
-    return true;
-  }, []);
+  const deleteIdea = useCallback(
+    async (id: string): Promise<boolean> => {
+      const target = state.ideas.find((i) => i.id === id);
+      const { error } = await supabase.from('ideas').delete().eq('id', id);
+      if (error) {
+        setState((s) => ({ ...s, error: error.message }));
+        return false;
+      }
+      setState((s) => ({ ...s, ideas: s.ideas.filter((i) => i.id !== id) }));
+      if (target) {
+        logActivity({
+          resource_type: 'idea',
+          resource_id: null,
+          action: 'delete',
+          label: `Idée supprimée — ${ideaLabel(target)}`,
+        });
+      }
+      return true;
+    },
+    [state.ideas]
+  );
 
   const promoteToProject = useCallback(
     async (idea: Idea): Promise<Project | null> => {
@@ -158,6 +187,13 @@ export function useIdeas() {
           i.id === idea.id ? { ...i, promoted_to_project_id: typedProject.id } : i
         ),
       }));
+      logActivity({
+        resource_type: 'idea',
+        resource_id: idea.id,
+        project_id: typedProject.id,
+        action: 'promote',
+        label: `Idée promue en projet — ${truncate(typedProject.name)}`,
+      });
       return typedProject;
     },
     []
