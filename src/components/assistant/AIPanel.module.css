@@ -299,7 +299,7 @@
 .fab {
   position: fixed;
   right: 16px;
-  bottom: calc(72px + env(safe-area-inset-bottom, 0));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0));
   width: 52px;
   height: 52px;
   border-radius: 50%;

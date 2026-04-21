@@ -1,3 +1,5 @@
+import { ChevronLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../hooks/useTheme';
 import { isOpenRouterConfigured } from '../lib/openrouter';
@@ -21,6 +23,9 @@ export default function Settings() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
+        <Link to="/" className={styles.back}>
+          <ChevronLeft size={18} strokeWidth={1.5} /> Projets
+        </Link>
         <h1 className={styles.title}>Paramètres</h1>
       </div>
 

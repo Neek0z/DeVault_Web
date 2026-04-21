@@ -1,7 +1,8 @@
-import { Plus, Trash2 } from 'lucide-react';
-import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
+import { useMemo, useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { FilterChip } from '../components/ui/FilterChip';
+import { SearchBar } from '../components/ui/SearchBar';
 import { useIdeas } from '../hooks/useIdeas';
 import { relativeDate } from '../lib/date';
 import type { Idea } from '../lib/types';
@@ -14,7 +15,19 @@ export default function Ideas() {
     useIdeas();
   const [modalOpen, setModalOpen] = useState(false);
   const [editIdea, setEditIdea] = useState<Idea | null>(null);
+  const [query, setQuery] = useState('');
   const navigate = useNavigate();
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return ideas;
+    return ideas.filter(
+      (i) =>
+        i.body.toLowerCase().includes(q) ||
+        i.title?.toLowerCase().includes(q) ||
+        i.category?.toLowerCase().includes(q)
+    );
+  }, [ideas, query]);
 
   async function handlePromote(idea: Idea) {
     const ok = window.confirm(`Promouvoir cette idée en projet ?`);
@@ -32,6 +45,9 @@ export default function Ideas() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
+        <Link to="/" className={styles.back}>
+          <ChevronLeft size={18} strokeWidth={1.5} /> Projets
+        </Link>
         <div className={styles.header}>
           <h1 className={styles.title}>Idées</h1>
           <button
@@ -43,6 +59,11 @@ export default function Ideas() {
             <Plus size={20} strokeWidth={1.5} />
           </button>
         </div>
+        <SearchBar
+          value={query}
+          onChange={setQuery}
+          placeholder="Rechercher une idée…"
+        />
       </div>
 
       <div className={styles.content}>
@@ -51,9 +72,12 @@ export default function Ideas() {
         {!loading && !error && ideas.length === 0 && (
           <p className={styles.state}>Aucune idée. Jette-en une avec +.</p>
         )}
+        {!loading && !error && ideas.length > 0 && filtered.length === 0 && (
+          <p className={styles.state}>Aucune idée ne correspond.</p>
+        )}
 
         <div className={styles.list}>
-          {ideas.map((idea) => (
+          {filtered.map((idea) => (
           <div
             key={idea.id}
             className={styles.card}

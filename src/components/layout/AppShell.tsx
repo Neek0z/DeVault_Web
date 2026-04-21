@@ -5,7 +5,6 @@ import { useProject } from '../../hooks/useProject';
 import { AIPanel } from '../assistant/AIPanel';
 import styles from './AppShell.module.css';
 import aiStyles from '../assistant/AIPanel.module.css';
-import { BottomNav } from './BottomNav';
 import { Sidebar } from './Sidebar';
 
 export function AppShell() {
@@ -29,7 +28,6 @@ export function AppShell() {
           <Outlet />
         </div>
       </main>
-      <BottomNav />
 
       <button
         type="button"

@@ -1,4 +1,4 @@
-import { Plus, Settings as SettingsIcon } from 'lucide-react';
+import { Lightbulb, Plus, Search as SearchIcon, Settings as SettingsIcon } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ProjectRow } from '../components/project/ProjectRow';
@@ -52,6 +52,22 @@ export default function Dashboard() {
             <h1 className={styles.title}>Projets</h1>
           </div>
           <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={() => navigate('/search')}
+              aria-label="Recherche"
+            >
+              <SearchIcon size={18} strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              className={styles.iconBtn}
+              onClick={() => navigate('/ideas')}
+              aria-label="Idées"
+            >
+              <Lightbulb size={18} strokeWidth={1.5} />
+            </button>
             <button
               type="button"
               className={styles.iconBtn}

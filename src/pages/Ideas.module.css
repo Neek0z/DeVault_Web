@@ -8,9 +8,27 @@
 
 .hero {
   flex: none;
-  padding: 20px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 16px 12px;
   background: var(--bg-primary);
   border-bottom: 0.5px solid var(--border);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  font-size: 15px;
+  padding: 4px 0;
+  margin-left: -4px;
+  align-self: flex-start;
+}
+
+.back:hover {
+  color: var(--text-primary);
 }
 
 .content {
