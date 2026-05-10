@@ -6,9 +6,10 @@
   .sidebar {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
-    width: 220px;
-    padding: var(--space-6) var(--space-4);
+    gap: var(--space-1);
+    width: 200px;
+    flex-shrink: 0;
+    padding: var(--space-6) var(--space-3);
     border-right: 0.5px solid var(--border);
     background: var(--bg-secondary);
   }
@@ -17,16 +18,50 @@
     font-size: 20px;
     font-weight: 800;
     letter-spacing: -0.02em;
-    margin-bottom: var(--space-6);
+    margin: 0 var(--space-2) var(--space-4);
+  }
+
+  .paletteBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    margin-bottom: var(--space-4);
+    border-radius: var(--radius-md);
+    background: var(--bg-fill);
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .paletteBtn:hover {
+    background: var(--border);
+    color: var(--text-primary);
+  }
+
+  .paletteBtn span:first-of-type {
+    flex: 1;
+    text-align: left;
+  }
+
+  .kbd {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 5px;
+    border-radius: 4px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    border: 0.5px solid var(--border);
   }
 
   .link {
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    padding: var(--space-3);
+    padding: var(--space-2) var(--space-3);
     border-radius: var(--radius-md);
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 500;
     color: var(--text-secondary);
     transition: background-color 0.15s ease, color 0.15s ease;
@@ -40,5 +75,17 @@
   .active {
     background: var(--bg-fill);
     color: var(--text-primary);
+  }
+}
+
+@media (min-width: 1024px) {
+  .sidebar {
+    width: 240px;
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .link {
+    padding: var(--space-3);
+    font-size: 15px;
   }
 }

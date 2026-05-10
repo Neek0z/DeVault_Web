@@ -1,15 +1,35 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './components/layout/AppShell';
+import { ToastProvider } from './components/ui/Toast';
 import { useAuth } from './hooks/useAuth';
 import { useTheme } from './hooks/useTheme';
 import Auth from './pages/Auth';
 import Dashboard from './pages/Dashboard';
-import History from './pages/History';
-import Ideas from './pages/Ideas';
-import JournalNew from './pages/JournalNew';
-import ProjectDetail from './pages/ProjectDetail';
-import SearchPage from './pages/Search';
-import Settings from './pages/Settings';
+
+const ProjectDetail = lazy(() => import('./pages/ProjectDetail'));
+const JournalNew = lazy(() => import('./pages/JournalNew'));
+const Ideas = lazy(() => import('./pages/Ideas'));
+const SearchPage = lazy(() => import('./pages/Search'));
+const Settings = lazy(() => import('./pages/Settings'));
+const History = lazy(() => import('./pages/History'));
+
+function PageLoader() {
+  return (
+    <div
+      style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'var(--text-secondary)',
+        fontSize: 13,
+      }}
+    >
+      Chargement…
+    </div>
+  );
+}
 
 function ProtectedRoutes() {
   const { session, loading } = useAuth();
@@ -37,12 +57,54 @@ function ProtectedRoutes() {
     <Routes>
       <Route element={<AppShell />}>
         <Route index element={<Dashboard />} />
-        <Route path="projects/:id" element={<ProjectDetail />} />
-        <Route path="journal/new" element={<JournalNew />} />
-        <Route path="ideas" element={<Ideas />} />
-        <Route path="search" element={<SearchPage />} />
-        <Route path="settings" element={<Settings />} />
-        <Route path="history" element={<History />} />
+        <Route
+          path="projects/:id"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <ProjectDetail />
+            </Suspense>
+          }
+        />
+        <Route
+          path="journal/new"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <JournalNew />
+            </Suspense>
+          }
+        />
+        <Route
+          path="ideas"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <Ideas />
+            </Suspense>
+          }
+        />
+        <Route
+          path="search"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <SearchPage />
+            </Suspense>
+          }
+        />
+        <Route
+          path="settings"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <Settings />
+            </Suspense>
+          }
+        />
+        <Route
+          path="history"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <History />
+            </Suspense>
+          }
+        />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
@@ -55,15 +117,17 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route
-          path="/auth"
-          element={
-            loading ? null : session ? <Navigate to="/" replace /> : <Auth />
-          }
-        />
-        <Route path="/*" element={<ProtectedRoutes />} />
-      </Routes>
+      <ToastProvider>
+        <Routes>
+          <Route
+            path="/auth"
+            element={
+              loading ? null : session ? <Navigate to="/" replace /> : <Auth />
+            }
+          />
+          <Route path="/*" element={<ProtectedRoutes />} />
+        </Routes>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

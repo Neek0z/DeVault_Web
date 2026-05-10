@@ -10,6 +10,41 @@
   flex: none;
   padding: 16px 16px 8px;
   background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.topActions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-fill);
+  color: var(--text-primary);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: var(--border);
+}
+
+.iconBtnDanger:hover {
+  background: #fde4e2;
+  color: #d4302a;
+}
+
+[data-theme='dark'] .iconBtnDanger:hover {
+  background: #3a1f1f;
+  color: #ff7a72;
 }
 
 .hero {

@@ -279,7 +279,7 @@
     bottom: 0;
     left: auto;
     width: 380px;
-    height: 100vh;
+    height: 100dvh;
     max-height: none;
     border-radius: 0;
     border-left: 0.5px solid var(--border);
@@ -293,6 +293,22 @@
 
   .grabber {
     display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .panel {
+    width: 420px;
+  }
+
+  .bubble {
+    max-width: 78%;
+  }
+}
+
+@media (min-width: 1440px) {
+  .panel {
+    width: 460px;
   }
 }
 

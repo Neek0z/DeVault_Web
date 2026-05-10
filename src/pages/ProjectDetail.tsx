@@ -1,4 +1,4 @@
-import { ChevronLeft, Plus } from 'lucide-react';
+import { Archive, ChevronLeft, Plus, Trash2 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CredentialRow } from '../components/project/CredentialRow';
@@ -7,11 +7,13 @@ import { StackTag } from '../components/project/StackTag';
 import { StatusBadge } from '../components/project/StatusBadge';
 import { TodoItem } from '../components/project/TodoItem';
 import { FilterChip } from '../components/ui/FilterChip';
+import { useToast } from '../components/ui/useToast';
 import { useCredentials } from '../hooks/useCredentials';
 import { useJournal } from '../hooks/useJournal';
 import { useProject } from '../hooks/useProject';
+import { useProjects } from '../hooks/useProjects';
 import { useTodos } from '../hooks/useTodos';
-import type { ProjectStatus } from '../lib/types';
+import type { Project, ProjectStatus } from '../lib/types';
 import styles from './ProjectDetail.module.css';
 
 type Tab = 'overview' | 'stack' | 'credentials' | 'journal' | 'todos' | 'ideas';
@@ -34,12 +36,67 @@ const STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
 
 export default function ProjectDetail() {
   const { id } = useParams();
-  const { project, loading, error, save } = useProject(id);
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { project, loading, error, save, remove } = useProject(id);
+  const { insertProject, updateProject } = useProjects();
   const journal = useJournal(id);
   const todos = useTodos(id);
   const [tab, setTab] = useState<Tab>('overview');
   const [mountTime] = useState(() => Date.now());
   const pendingTodos = todos.todos.filter((t) => !t.completed).length;
+
+  async function handleArchive(p: Project) {
+    if (p.status === 'abandoned') {
+      const reverted = await save({ status: 'active' });
+      if (reverted)
+        toast.show({ message: `« ${p.name} » remis actif.` });
+      return;
+    }
+    const ok = await save({ status: 'abandoned' });
+    if (!ok) return;
+    toast.show({
+      message: `« ${p.name} » archivé.`,
+      action: {
+        label: 'Annuler',
+        onAction: () => void save({ status: p.status }),
+      },
+    });
+  }
+
+  async function handleDelete(p: Project) {
+    const sure = window.confirm(
+      `Supprimer définitivement « ${p.name} » et tout son contenu (journal, identifiants, tâches) ?`
+    );
+    if (!sure) return;
+    const snapshot: Project = { ...p };
+    const ok = await remove();
+    if (!ok) return;
+    navigate('/', { replace: true });
+    toast.show({
+      message: `« ${p.name} » supprimé.`,
+      duration: 6000,
+      action: {
+        label: 'Restaurer',
+        onAction: () => {
+          void insertProject({
+            name: snapshot.name,
+            description: snapshot.description,
+            status: snapshot.status,
+            stack: snapshot.stack,
+          }).then((restored) => {
+            if (restored) {
+              // best-effort: keep status (insert defaults to 'idea' if not provided)
+              if (restored.status !== snapshot.status) {
+                void updateProject(restored.id, { status: snapshot.status });
+              }
+              navigate(`/projects/${restored.id}`);
+            }
+          });
+        },
+      },
+    });
+  }
 
   if (loading) return <p className={styles.state}>Chargement…</p>;
   if (error) return <p className={styles.state}>Erreur : {error}</p>;
@@ -58,6 +115,26 @@ export default function ProjectDetail() {
         <Link to="/" className={styles.back}>
           <ChevronLeft size={18} strokeWidth={1.5} /> Projets
         </Link>
+        <div className={styles.topActions}>
+          <button
+            type="button"
+            className={styles.iconBtn}
+            onClick={() => void handleArchive(project)}
+            aria-label={project.status === 'abandoned' ? 'Réactiver' : 'Archiver'}
+            title={project.status === 'abandoned' ? 'Réactiver' : 'Archiver'}
+          >
+            <Archive size={16} strokeWidth={1.5} />
+          </button>
+          <button
+            type="button"
+            className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+            onClick={() => void handleDelete(project)}
+            aria-label="Supprimer"
+            title="Supprimer"
+          >
+            <Trash2 size={16} strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
 
       <div className={styles.hero}>

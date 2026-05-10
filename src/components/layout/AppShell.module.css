@@ -10,7 +10,6 @@
   flex: 1;
   min-height: 0;
   width: 100%;
-  max-width: 480px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -25,12 +24,31 @@
   animation: pageFadeIn 350ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Mobile large / tablet portrait — soft cap, still single-column. */
+@media (min-width: 640px) {
+  .main {
+    max-width: 600px;
+    padding-bottom: 0;
+  }
+}
+
+/* Tablet / small desktop — sidebar appears, no rail yet. */
 @media (min-width: 768px) {
   .shell {
     flex-direction: row;
   }
 
   .main {
-    padding-bottom: 0;
+    max-width: 720px;
+  }
+}
+
+/* Desktop — full 3-column master-detail layout, main fills remaining space. */
+@media (min-width: 1024px) {
+  .main {
+    max-width: none;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
   }
 }

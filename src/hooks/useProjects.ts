@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Project, ProjectStatus } from '../lib/types';
+import { useRealtimeSync } from './useRealtimeSync';
 
 export interface ProjectInput {
   name: string;
@@ -50,6 +51,27 @@ export function useProjects() {
     const { projects, error } = await fetchProjects();
     setState({ projects, loading: false, error });
   }, []);
+
+  const onRealtime = useCallback(
+    (event: 'INSERT' | 'UPDATE' | 'DELETE', row: Project) => {
+      setState((s) => {
+        if (event === 'DELETE') {
+          return { ...s, projects: s.projects.filter((p) => p.id !== row.id) };
+        }
+        const exists = s.projects.some((p) => p.id === row.id);
+        const next = exists
+          ? s.projects.map((p) => (p.id === row.id ? row : p))
+          : [row, ...s.projects];
+        return {
+          ...s,
+          projects: next.sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
+        };
+      });
+    },
+    []
+  );
+
+  useRealtimeSync<Project>({ table: 'projects', onChange: onRealtime });
 
   const insertProject = useCallback(
     async (input: ProjectInput): Promise<Project | null> => {
@@ -130,5 +152,25 @@ export function useProjects() {
     []
   );
 
-  return { ...state, refetch, insertProject, updateProject };
+  const deleteProject = useCallback(async (id: string): Promise<boolean> => {
+    const target = state.projects.find((p) => p.id === id);
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+    if (error) {
+      setState((s) => ({ ...s, error: error.message }));
+      return false;
+    }
+    setState((s) => ({ ...s, projects: s.projects.filter((p) => p.id !== id) }));
+    if (target) {
+      logActivity({
+        resource_type: 'project',
+        resource_id: null,
+        project_id: null,
+        action: 'delete',
+        label: `Projet supprimé — ${truncate(target.name)}`,
+      });
+    }
+    return true;
+  }, [state.projects]);
+
+  return { ...state, refetch, insertProject, updateProject, deleteProject };
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Credential } from '../lib/types';
+import { useRealtimeSync } from './useRealtimeSync';
 
 export interface CredentialInput {
   project_id: string;
@@ -61,6 +62,28 @@ export function useCredentials(projectId: string | undefined) {
     const { credentials, error } = await fetchCredentials(projectId);
     setState({ credentials, loading: false, error });
   }, [projectId]);
+
+  const onRealtime = useCallback(
+    (event: 'INSERT' | 'UPDATE' | 'DELETE', row: Credential) => {
+      setState((s) => {
+        if (event === 'DELETE')
+          return { ...s, credentials: s.credentials.filter((c) => c.id !== row.id) };
+        const exists = s.credentials.some((c) => c.id === row.id);
+        const next = exists
+          ? s.credentials.map((c) => (c.id === row.id ? row : c))
+          : [row, ...s.credentials];
+        return { ...s, credentials: next };
+      });
+    },
+    []
+  );
+
+  useRealtimeSync<Credential>({
+    table: 'credentials',
+    filter: projectId ? `project_id=eq.${projectId}` : null,
+    enabled: Boolean(projectId),
+    onChange: onRealtime,
+  });
 
   const insertCredential = useCallback(
     async (input: CredentialInput): Promise<Credential | null> => {

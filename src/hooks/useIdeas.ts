@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Idea, Project } from '../lib/types';
+import { useRealtimeSync } from './useRealtimeSync';
 
 function ideaLabel(idea: Idea): string {
   return idea.title?.trim() || truncate(idea.body);
@@ -52,6 +53,26 @@ export function useIdeas() {
     const { ideas, error } = await fetchIdeas();
     setState({ ideas, loading: false, error });
   }, []);
+
+  const onRealtime = useCallback(
+    (event: 'INSERT' | 'UPDATE' | 'DELETE', row: Idea) => {
+      setState((s) => {
+        if (event === 'DELETE')
+          return { ...s, ideas: s.ideas.filter((i) => i.id !== row.id) };
+        const exists = s.ideas.some((i) => i.id === row.id);
+        const next = exists
+          ? s.ideas.map((i) => (i.id === row.id ? row : i))
+          : [row, ...s.ideas];
+        return {
+          ...s,
+          ideas: next.sort((a, b) => b.created_at.localeCompare(a.created_at)),
+        };
+      });
+    },
+    []
+  );
+
+  useRealtimeSync<Idea>({ table: 'ideas', onChange: onRealtime });
 
   const insertIdea = useCallback(async (input: IdeaInput): Promise<Idea | null> => {
     const { data: userData } = await supabase.auth.getUser();

@@ -1,6 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  sendMessage,
+  streamMessage,
   type ChatMessage,
   type ToolCall,
   type ToolDefinition,
@@ -364,10 +364,79 @@ async function executeTool(
   return `⚠ Fonction inconnue : ${call.name}`;
 }
 
+async function persistConversation(messages: ChatMessage[]): Promise<void> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const user_id = userRes.user?.id;
+  if (!user_id) return;
+  await supabase
+    .from('ai_conversations')
+    .upsert(
+      { user_id, messages, updated_at: new Date().toISOString() },
+      { onConflict: 'user_id' }
+    );
+}
+
+async function loadConversation(): Promise<ChatMessage[]> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const user_id = userRes.user?.id;
+  if (!user_id) return [];
+  const { data, error } = await supabase
+    .from('ai_conversations')
+    .select('messages')
+    .eq('user_id', user_id)
+    .maybeSingle();
+  if (error || !data) return [];
+  const raw = (data.messages ?? []) as unknown;
+  if (!Array.isArray(raw)) return [];
+  return raw.filter(
+    (m): m is ChatMessage =>
+      typeof m === 'object' &&
+      m !== null &&
+      'role' in m &&
+      'content' in m &&
+      (m.role === 'user' || m.role === 'assistant') &&
+      typeof m.content === 'string'
+  );
+}
+
+async function clearConversationDb(): Promise<void> {
+  const { data: userRes } = await supabase.auth.getUser();
+  const user_id = userRes.user?.id;
+  if (!user_id) return;
+  await supabase.from('ai_conversations').delete().eq('user_id', user_id);
+}
+
 export function useAssistant() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hydrated, setHydrated] = useState(false);
+  // Skip persisting the very first save (which is the loaded conversation itself).
+  const skipNextPersist = useRef(true);
+
+  // Load conversation on mount.
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const loaded = await loadConversation();
+      if (cancelled) return;
+      setMessages(loaded);
+      setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Persist conversation on change (after hydration).
+  useEffect(() => {
+    if (!hydrated) return;
+    if (skipNextPersist.current) {
+      skipNextPersist.current = false;
+      return;
+    }
+    void persistConversation(messages);
+  }, [messages, hydrated]);
 
   const sendUserMessage = useCallback(
     async (text: string, projectContext?: ProjectContext) => {
@@ -375,30 +444,68 @@ export function useAssistant() {
       if (!trimmed || loading) return;
 
       const userMessage: ChatMessage = { role: 'user', content: trimmed };
-      const next = [...messages, userMessage];
-      setMessages(next);
+      // Add the user msg + an empty assistant placeholder we'll stream into.
+      setMessages((prev) => [
+        ...prev,
+        userMessage,
+        { role: 'assistant', content: '' },
+      ]);
       setLoading(true);
       setError(null);
 
       try {
         const data = await loadUserData(projectContext?.project.id);
-        const reply = await sendMessage(next, buildSystemPrompt(data), TOOLS);
+        const conversation: ChatMessage[] = [...messages, userMessage];
 
-        const newMessages: ChatMessage[] = [];
-        if (reply.content) {
-          newMessages.push({ role: 'assistant', content: reply.content });
-        }
+        const reply = await streamMessage(
+          conversation,
+          buildSystemPrompt(data),
+          TOOLS,
+          (delta: string) => {
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              if (!last || last.role !== 'assistant') return prev;
+              const updated: ChatMessage = {
+                role: 'assistant',
+                content: last.content + delta,
+              };
+              return [...prev.slice(0, -1), updated];
+            });
+          }
+        );
+
+        // Finalize: replace the placeholder with the final content (in case nothing streamed).
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (!last || last.role !== 'assistant') return prev;
+          if (reply.content && last.content !== reply.content) {
+            return [
+              ...prev.slice(0, -1),
+              { role: 'assistant', content: reply.content },
+            ];
+          }
+          // If neither content nor tool calls produced anything, drop the placeholder.
+          if (!last.content && reply.toolCalls.length === 0) {
+            return [...prev.slice(0, -1), { role: 'assistant', content: '…' }];
+          }
+          return prev;
+        });
+
         for (const call of reply.toolCalls) {
           const result = await executeTool(call, data.projects);
-          newMessages.push({ role: 'assistant', content: result });
+          setMessages((prev) => [...prev, { role: 'assistant', content: result }]);
         }
-        if (newMessages.length === 0) {
-          newMessages.push({ role: 'assistant', content: '…' });
-        }
-        setMessages((prev) => [...prev, ...newMessages]);
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Erreur inconnue';
         setError(msg);
+        // Remove the empty placeholder on error.
+        setMessages((prev) => {
+          const last = prev[prev.length - 1];
+          if (last && last.role === 'assistant' && last.content === '') {
+            return prev.slice(0, -1);
+          }
+          return prev;
+        });
       } finally {
         setLoading(false);
       }
@@ -409,6 +516,7 @@ export function useAssistant() {
   const clearConversation = useCallback(() => {
     setMessages([]);
     setError(null);
+    void clearConversationDb();
   }, []);
 
   return { messages, loading, error, sendUserMessage, clearConversation };

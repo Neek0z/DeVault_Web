@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { Todo } from '../lib/types';
+import { useRealtimeSync } from './useRealtimeSync';
 
 interface State {
   todos: Todo[];
@@ -47,6 +48,28 @@ export function useTodos(projectId: string | undefined) {
       cancelled = true;
     };
   }, [projectId]);
+
+  const onRealtime = useCallback(
+    (event: 'INSERT' | 'UPDATE' | 'DELETE', row: Todo) => {
+      setState((s) => {
+        if (event === 'DELETE')
+          return { ...s, todos: s.todos.filter((t) => t.id !== row.id) };
+        const exists = s.todos.some((t) => t.id === row.id);
+        const next = exists
+          ? s.todos.map((t) => (t.id === row.id ? row : t))
+          : [row, ...s.todos];
+        return { ...s, todos: next };
+      });
+    },
+    []
+  );
+
+  useRealtimeSync<Todo>({
+    table: 'todos',
+    filter: projectId ? `project_id=eq.${projectId}` : null,
+    enabled: Boolean(projectId),
+    onChange: onRealtime,
+  });
 
   const insertTodo = useCallback(
     async (text: string): Promise<Todo | null> => {

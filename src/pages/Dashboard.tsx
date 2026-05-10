@@ -4,9 +4,12 @@ import { useNavigate } from 'react-router-dom';
 import { ProjectRow } from '../components/project/ProjectRow';
 import { FilterChip } from '../components/ui/FilterChip';
 import { SearchBar } from '../components/ui/SearchBar';
+import { SkeletonList } from '../components/ui/Skeleton';
+import { useIsDesktop } from '../hooks/useMediaQuery';
 import { useProjects } from '../hooks/useProjects';
 import type { ProjectStatus } from '../lib/types';
 import styles from './Dashboard.module.css';
+import { DesktopHome } from './DesktopHome';
 
 type Filter = 'all' | ProjectStatus;
 
@@ -19,6 +22,7 @@ const FILTERS: { value: Filter; label: string }[] = [
 ];
 
 export default function Dashboard() {
+  const isDesktop = useIsDesktop();
   const { projects, loading, error, insertProject } = useProjects();
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
@@ -39,6 +43,8 @@ export default function Dashboard() {
   }, [projects, query, filter]);
 
   const activeCount = projects.filter((p) => p.status === 'active').length;
+
+  if (isDesktop) return <DesktopHome />;
 
   return (
     <div className={styles.page}>
@@ -101,7 +107,7 @@ export default function Dashboard() {
 
       <div className={styles.content}>
         <div className={styles.list}>
-          {loading && <p className={styles.state}>Chargement…</p>}
+          {loading && <SkeletonList count={5} />}
           {error && <p className={styles.state}>Erreur : {error}</p>}
           {!loading && !error && filtered.length === 0 && (
             <p className={styles.state}>

@@ -116,5 +116,25 @@ export function useProject(id: string | undefined) {
     [id]
   );
 
-  return { ...state, refetch, save };
+  const remove = useCallback(async (): Promise<boolean> => {
+    if (!id) return false;
+    const target = state.project;
+    const { error } = await supabase.from('projects').delete().eq('id', id);
+    if (error) {
+      setState((s) => ({ ...s, error: error.message }));
+      return false;
+    }
+    if (target) {
+      logActivity({
+        resource_type: 'project',
+        resource_id: null,
+        project_id: null,
+        action: 'delete',
+        label: `Projet supprimé — ${truncate(target.name)}`,
+      });
+    }
+    return true;
+  }, [id, state.project]);
+
+  return { ...state, refetch, save, remove };
 }

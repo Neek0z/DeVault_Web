@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { logActivity, truncate } from '../lib/activity';
 import { supabase } from '../lib/supabase';
 import type { JournalEntry, JournalType } from '../lib/types';
+import { useRealtimeSync } from './useRealtimeSync';
 
 function labelFor(entry: JournalEntry): string {
   return entry.title?.trim() || truncate(entry.body);
@@ -65,6 +66,31 @@ export function useJournal(projectId: string | undefined) {
     const { entries, error } = await fetchEntries(projectId);
     setState({ entries, loading: false, error });
   }, [projectId]);
+
+  const onRealtime = useCallback(
+    (event: 'INSERT' | 'UPDATE' | 'DELETE', row: JournalEntry) => {
+      setState((s) => {
+        if (event === 'DELETE')
+          return { ...s, entries: s.entries.filter((e) => e.id !== row.id) };
+        const exists = s.entries.some((e) => e.id === row.id);
+        const next = exists
+          ? s.entries.map((e) => (e.id === row.id ? row : e))
+          : [row, ...s.entries];
+        return {
+          ...s,
+          entries: next.sort((a, b) => b.created_at.localeCompare(a.created_at)),
+        };
+      });
+    },
+    []
+  );
+
+  useRealtimeSync<JournalEntry>({
+    table: 'journal_entries',
+    filter: projectId ? `project_id=eq.${projectId}` : null,
+    enabled: Boolean(projectId),
+    onChange: onRealtime,
+  });
 
   const insertEntry = useCallback(
     async (input: JournalInput): Promise<JournalEntry | null> => {
