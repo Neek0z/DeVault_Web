@@ -13,6 +13,7 @@ const Ideas = lazy(() => import('./pages/Ideas'));
 const SearchPage = lazy(() => import('./pages/Search'));
 const Settings = lazy(() => import('./pages/Settings'));
 const History = lazy(() => import('./pages/History'));
+const Tasks = lazy(() => import('./pages/Tasks'));
 
 function PageLoader() {
   return (
@@ -102,6 +103,14 @@ function ProtectedRoutes() {
           element={
             <Suspense fallback={<PageLoader />}>
               <History />
+            </Suspense>
+          }
+        />
+        <Route
+          path="tasks"
+          element={
+            <Suspense fallback={<PageLoader />}>
+              <Tasks />
             </Suspense>
           }
         />

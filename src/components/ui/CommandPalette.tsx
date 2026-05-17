@@ -71,6 +71,13 @@ export function CommandPalette({ onClose, onOpenAssistant }: Props) {
         run: () => navigate('/'),
       },
       {
+        id: 'nav:tasks',
+        title: 'Toutes les tâches',
+        group: 'Navigation',
+        icon: ListTodo,
+        run: () => navigate('/tasks'),
+      },
+      {
         id: 'nav:ideas',
         title: 'Toutes les idées',
         group: 'Navigation',

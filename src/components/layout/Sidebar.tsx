@@ -1,9 +1,10 @@
-import { Clock, Command, Home, Lightbulb, Search, Settings } from 'lucide-react';
+import { Clock, Command, Home, Lightbulb, ListTodo, Search, Settings } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import styles from './Sidebar.module.css';
 
 const items = [
   { to: '/', label: 'Projets', icon: Home, end: true },
+  { to: '/tasks', label: 'Tâches', icon: ListTodo },
   { to: '/ideas', label: 'Idées', icon: Lightbulb },
   { to: '/search', label: 'Recherche', icon: Search },
   { to: '/history', label: 'Historique', icon: Clock },

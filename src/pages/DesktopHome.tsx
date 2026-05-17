@@ -100,7 +100,7 @@ export function DesktopHome() {
     {
       label: 'Tâches ouvertes',
       value: counters.openTodos,
-      to: null,
+      to: '/tasks',
     },
     {
       label: 'Journal · 7j',
